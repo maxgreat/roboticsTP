@@ -7,33 +7,35 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-  if(argc != 2) {
-    cerr << "Usage : " << argv[0] << " image" << endl;
+  if(argc != 3) {
+    cerr << "Usage : " << argv[0] << " image_left image_right" << endl;
     return 0;
   }
   
   // Open image from input file in grayscale
-  Mat img = imread(argv[1], 0);
+  Mat imgL = imread(argv[1], 0);
+  Mat imgR = imread(argv[2], 0);
 
-  // Create the output image in 8 bits grayscale format
-  Mat output_img(img.size(), CV_8UC1);
-  
-  // We explore and each pixel and invert the gray level
-  for(int i=0; i<img.rows; i++) {
-    const unsigned char *input = img.ptr<unsigned char>(i);
-    unsigned char *output = output_img.ptr<unsigned char>(i);
-    for(int j=0; j<img.cols; j++) {
-      output[j] = 255 - input[j];
-    }
-  }
 
-  //  We change the value of the pixel (200,100)
-  output_img.at<unsigned char>(100,200) = 255;
-    // warning: here the coordinates order is (row number, column number);
+  //Compute stereo correspondence
+  //StereoSGBM(Minimum possible disparity value,
+  //	       int numDisparities, int SADWindowSize,
+  //             int P1=0, int P2=0, int disp12MaxDiff=0,
+  //             int preFilterCap=0, int uniquenessRatio=0,
+  //             int speckleWindowSize=0, int speckleRange=0,
+  //             bool fullDP=false);
+  StereoSGBM stereo(0, 32, 7, 8*7*7, 32*7*7, 2, 0, 5, 100, 32, true);
+  Mat disparity;
+  stereo(imgL, imgR, disparity);
+
+  //Convert disparity image to a 8bits image
+  Mat display_disparity;
+  disparity.convertTo(display_disparity, CV_8U);
 
   // Display images and wait for a key press
-  imshow("input image", img);
-  imshow("output image", output_img);
+  imshow("left image", imgL);
+  imshow("right image", imgR);
+  imshow("disparity", display_disparity);
   waitKey();
   return 0;
 }

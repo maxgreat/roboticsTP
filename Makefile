@@ -6,7 +6,7 @@ else
 	CFLAGS= -W -Werror -Wall
 endif
 LDFLAGS=-I/usr/local/include/opencv/ -L/usr/local/lib
-LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_imgproc -lopencv_highgui -lopencv_core
+LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_core
 EXEC=example stereoVision
 
 all: $(EXEC)
