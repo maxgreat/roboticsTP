@@ -1,9 +1,9 @@
 DEBUG=yes
 CC=g++
 ifeq ($(DEBUG),yes)
-	CFLAGS= -W -Werror -Wall -g
+	CFLAGS= -Wall -Wextra -g
 else
-	CFLAGS= -W -Werror -Wall
+	CFLAGS= -Werror -Wextra -Wall -O3
 endif
 LDFLAGS=-I/usr/local/include/opencv/ -L/usr/local/lib
 LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_core

@@ -15,28 +15,78 @@ int main(int argc, char **argv)
   // Open image from input file in grayscale
   Mat imgL = imread(argv[1], 0);
   Mat imgR = imread(argv[2], 0);
+  imshow("left image", imgL);
+  imshow("right image", imgR);
 
 
-  //Compute stereo correspondence
-  //StereoSGBM(Minimum possible disparity value,
-  //	       int numDisparities, int SADWindowSize,
-  //             int P1=0, int P2=0, int disp12MaxDiff=0,
-  //             int preFilterCap=0, int uniquenessRatio=0,
-  //             int speckleWindowSize=0, int speckleRange=0,
-  //             bool fullDP=false);
+  //Question 2.1 - Computation of disparity data
+  //Compute stereo correspondence -> disparity mat
   StereoSGBM stereo(0, 32, 7, 8*7*7, 32*7*7, 2, 0, 5, 100, 32, true);
   Mat disparity;
   stereo(imgL, imgR, disparity);
 
   //Convert disparity image to a 8bits image
-  Mat display_disparity;
-  disparity.convertTo(display_disparity, CV_8U);
+  Mat disparity_d;
+  disparity.convertTo(disparity_d, CV_8U);
 
   // Display images and wait for a key press
-  imshow("left image", imgL);
-  imshow("right image", imgR);
-  imshow("disparity", display_disparity);
+  imshow("disparity", disparity_d);
+  
   waitKey();
+
+  //Question 2.2 Road/obstacles segmentation in Cartesian Space
+  //Remove pixel from the ground
+  float z; //depth
+  float Zo = 1.28; //height of the camera
+  int vo = 156; //intrinsic camera parameter
+  // int alpha = 410; //intrinsic camera parameter
+  float b = 0.22; //stereo baseline
+  
+  //our parameters
+  float ground = 0.2; //threshold for the ground
+  float max_height = 2.5; //maximum height, points above this limit are removed
+  for(int i=0; i<disparity_d.rows ; i++) {
+    for(int j=0; j<disparity_d.cols ; j++) {
+      //Height of this pixel
+      z = Zo - ( ((i-vo)*b) / (disparity_d.at<unsigned char>(i,j)/16.0) );
+      
+      //We remove every point below the ground (the threshold) and above max_height
+      if(z < ground || z >  max_height + ground) {
+         disparity_d.at<unsigned char>(i,j) = 0;
+      }
+    }
+  }
+  imshow("disparity corrected", disparity_d);
+  waitKey();
+  
+  
+  //Question 2.3 - Road/obstacles segmentation in Disparity Space
+  //Compute the v-disparity
+  Mat v_disparity(disparity_d.cols, 32, CV_8UC1);
+  
+  for(int i=0; i<disparity_d.rows ; i++) {
+    for(int j=0; j<disparity_d.cols ; j++) {
+       int d = disparity_d.at<unsigned char>(i,j);
+       if(d/16 > 0)
+         v_disparity.at<unsigned char>(i,d) += 1;
+    }
+  }
+
+  cout << "End compute v_disparity" << endl;
+
+  //extraction of the road surface
+  
+  
+
+
+  waitKey();
+
+
+
+
+
+
+
   return 0;
 }
 
