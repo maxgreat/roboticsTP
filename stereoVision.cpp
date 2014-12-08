@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
+#include "tp_util.hpp"
 
 using namespace cv;
 using namespace std;
@@ -72,8 +73,7 @@ int main(int argc, char **argv)
     }
   }
 
-  cout << "End compute v_disparity" << endl;
-
+  imshow("v disparity", v_disparity);
   //extraction of the road surface
   
   

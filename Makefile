@@ -7,25 +7,37 @@ else
 endif
 LDFLAGS=-I/usr/local/include/opencv/ -L/usr/local/lib
 LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_core
-EXEC=example stereoVision
+EXEC=example readLidarData stereoVision laser
 
 all: $(EXEC)
 
-example : example.cpp
-	echo compilation of example
+example: example.cpp
+	@echo compilation of example
 	$(CC) $(LDFLAGS) -o $@ $< $(LBLIBS)
 
-stereoVision : stereoVision.o
-	echo ------------------------------------
-	echo compilation of stereoVision
-	echo ------------------------------------
+stereoVision: stereoVision.o tp_util.o
+	@echo ----------------------------------------------
+	@echo compilation of stereoVision
+	@echo ----------------------------------------------
 	$(CC) $(LDFLAGS) -o $@ $< $(LBLIBS)
 
-stereoVision.o: stereoVision.cpp
-	echo ------------------------------------
-	echo compilation of stereoVision.o
-	echo ------------------------------------
+readLidarData: readLidarData.o
+	@echo ----------------------------------------------
+	@echo compilation of readLidarData
+	@echo ----------------------------------------------
+	$(CC) $(LDFLAGS) -o $@ $< $(LBLIBS)
+
+laser: laser.o
+	@echo ----------------------------------------------
+	@echo compilation of laser
+	@echo ----------------------------------------------
+	$(CC) $(LDFLAGS) -o $@ $< $(LBLIBS)
+	
+%.o: %.cpp
+	@echo ----------------------------------------------
+	@echo compilation of $<
+	@echo ----------------------------------------------
 	$(CC) -c $< $(CFLAGS)
 
 clean:
-	rm -rf *.o $(EXEC)
+	rm -rf *.o $(EXEC) *~
