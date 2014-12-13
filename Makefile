@@ -11,7 +11,7 @@ ifeq ($(FAC),yes)
 else
 	LDFLAGS=-I/usr/local/include/opencv/ -L/usr/local/lib
 endif
-LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_flann -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_core
+LBLIBS=-lopencv_objdetect -lopencv_features2d -lopencv_flann -lopencv_calib3d -lopencv_imgproc -lopencv_highgui -lopencv_core -lopencv_video
 EXEC=readLidarData stereoVision laser
 
 all: $(EXEC)

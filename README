@@ -1,0 +1,11 @@
+example and readLidarData : given with the subject - no modification 
+stereoVision : part 1 - stereo vision
+laser : part 2 - extraction from lidar data
+
+compilation : make
+(maybe some modification in the makefile for opencv location)
+
+execution :
+./stereoVision img_left img_right
+
+./laser

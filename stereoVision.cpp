@@ -76,6 +76,19 @@ int main(int argc, char **argv)
   imshow("v disparity", v_disparity);
   //extraction of the road surface
   
+  //Rien compris aux question 2 et 3
+  
+  
+  
+  //Question 2.4 - Clustering
+  
+  
+  
+  
+  
+  
+  
+  
   
 
 
