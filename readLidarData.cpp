@@ -56,6 +56,10 @@ int main( int argc, char** argv )
     Mat left_display_img;
     cvtColor(left_img, left_display_img, CV_GRAY2RGB);
 
+	float x_sum=0;
+	float y_sum=0;
+	int x_num = 0;
+	int y_num = 0;
     //  Process all the lidar impacts
     for (int i=0; i<nb_impacts/2; ++i)
     {
@@ -65,9 +69,9 @@ int main( int argc, char** argv )
       //  compute the grid
       if (x>x_min && x<x_max && y>y_min && y<y_max && y>0)
         grid.at<float>((y_max-(y-y_min))/y_step, (x-x_min)/x_step) = 1.0;
-
+	
       //  display on stereo image
-      if (y>0)
+      if (x>x_min && x<x_max && y>y_min && y<y_max && y>0)
       {
         double z=camera_height -(lidar_height + sqrt(x*x+y*y)*sin(lidar_pitch_angle));
         int u=(int)uo+alpha_u*(x/(y+camera_ty));
@@ -78,9 +82,33 @@ int main( int argc, char** argv )
           left_display_img.at<unsigned char>(v, 3*u+1) = 0;
           left_display_img.at<unsigned char>(v, 3*u+2) = 255;
         }
-      }          
+      }
+	if (x>4 && x<7.5 && y>9 && y<11)
+	{
+	x_sum+=x;
+	y_sum+=y;
+	x_num++;
+	y_num++;
+	}
+		
     }
+	if(x_num>0 || y_num >0){
+	float x_mean =x_sum/x_num;
+	float y_mean =y_sum/y_num;
+	  double z=camera_height -(lidar_height + sqrt(x_mean*x_mean+y_mean*y_mean)*sin(lidar_pitch_angle));
+        int u=(int)uo+alpha_u*(x_mean/(y_mean+camera_ty));
+        int v=(int)vo+alpha_v*(z/(y_mean+camera_ty));
+        if (u>0 && u<left_img.cols && v>0 && v<left_img.rows)
+        {
+          left_display_img.at<unsigned char>(v, 3*u) = 0;
+          left_display_img.at<unsigned char>(v, 3*u+1) = 255;
+          left_display_img.at<unsigned char>(v, 3*u+2) = 255;
+        }
 
+
+	cout<< "Mean for x: " << x_mean << "\n"; 
+	cout<< "Mean for y: " << y_mean << "\n";
+	}
     //   prepare the display of the grid
     Mat display_grid; //  to have a RGB grid for display
     grid.convertTo(display_grid, CV_8U, 255);
@@ -88,6 +116,8 @@ int main( int argc, char** argv )
 
     Mat display_grid_large;// to have a large grid for display
     resize(display_grid, display_grid_large, Size(600,600));
+	
+    //Rect crop_left_image(10,10,200,200);	
 
     //  show images
     imshow("top view",  display_grid_large);
