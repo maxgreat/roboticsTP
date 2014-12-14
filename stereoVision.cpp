@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include "tp_util.hpp"
 
 using namespace cv;
@@ -126,30 +127,71 @@ int main(int argc, char **argv)
   
   
   
-  
   //Question 2.4 - Clustering
-  Mat dispTransform;
-  cv::erode(disparity_d, dispTransform, Mat());
-  cv::dilate(dispTransform, dispTransform, Mat(),Point(-1,-1),2);
   
-  imshow("disparity transformed", dispTransform);
+  //int erosion_elem = 0;
+  int erosion_size = 5;
+  Mat element = getStructuringElement( MORPH_RECT,
+                                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                       Point( erosion_size, erosion_size ) );
   
-  Mat dispSegmented;
-  segmentDisparity(dispTransform, dispSegmented);
-  imshow("disparity segmented transformed", dispSegmented);
+  Mat disparityFiltered;
+  cv::erode(disparity_d, disparityFiltered, element);
+  cv::dilate(disparityFiltered, disparityFiltered, element);
   
-  
-  
-  
-
-
+  imshow("disparity transformed", disparityFiltered);
   waitKey();
+  
+ /* 
+  
+  Mat dispSegmented(disparityFiltered.size(), CV_8UC1);;
+  int nb_seg = segmentDisparity(disparityFiltered, dispSegmented);
+  
+  cout << "On remplit les segments" << endl;
+  vector<vector<Point> > segments(nb_seg, vector<Point>(0));
+  for(int i=0; i < disparityFiltered.rows;i++){
+    for(int j=0 ; j < disparityFiltered.cols ; j++){
+        segments[dispSegmented.at<unsigned char>(i,j)].push_back(Point(i,j));
+    }
+  } 
+  cout << "fin remplissage segment" << endl;
+  cout << "Il y a en tout :" << nb_seg << " segments " << endl;
+  vector<vector<Point> > seg;
+  for(int i = 0 ; i< nb_seg;i++){
+    if(segments[i].size() > 60){
+        seg.push_back(segments[i]);
+    }
+  }
+  cout << "il y a en tout :" << seg.size() << "segment" << endl;
+  nb_seg = seg.size();
+  
 
-
-
-
-
-
+  vector<Point> means(nb_seg);
+  vector<Vec4i> boundBoxes(nb_seg); //(vmin, vmax), (umin, umax)
+  for(int i = 0; i < nb_seg; i++){
+     means[i] = Point(0,0);
+     boundBoxes[i] = Vec4i(segments[i][0].x,seg[i][0].y, seg[i][1].x, seg[i][1].y);
+     
+     for(unsigned int k = 0; k < segments[i].size(); k++){
+        means[i] += seg[i][0];
+        
+        boundBoxes[i][0] = std::min(boundBoxes[i][0], seg[i][k].x);
+        boundBoxes[i][1] = std::max(boundBoxes[i][1], seg[i][k].x);
+        boundBoxes[i][2] = std::min(boundBoxes[i][2], seg[i][k].y);
+        boundBoxes[i][3] = std::max(boundBoxes[i][3], seg[i][k].y);
+     }
+     means[i].x /= seg[i].size();
+     means[i].y /= seg[i].size();
+  }
+  cout << "fin calcul mean et bounding" << endl;
+  
+  for(int i = 0; i < nb_seg ; i++){
+     //disparityFiltered.at<unsigned char>(boundBoxes[i][0], boundBoxes[i][2]) = 255;
+     disparityFiltered.at<unsigned char>(means[i].x, means[i].y) = 255;
+  }
+  imshow("disparity transformed", disparityFiltered);
+  waitKey();
+*/
 
   return 0;
 }
