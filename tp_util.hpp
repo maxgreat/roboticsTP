@@ -15,7 +15,7 @@
 /// \param a_max Max slope of the line, to avoid to detect vertical lines
 
 void fitLineRansac(const std::vector<cv::Point2f> points,
-                   cv:: Vec4f &line,
+                   cv::Vec4f &line,
                    int iterations = 1000,
                    double sigma = 1.,
 				   double a_max = 7.);

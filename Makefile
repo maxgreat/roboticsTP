@@ -24,7 +24,7 @@ stereoVision: stereoVision.o tp_util.o
 	@echo ----------------------------------------------
 	@echo compilation of stereoVision
 	@echo ----------------------------------------------
-	$(CC) $(LDFLAGS) -o $@ $< $(LBLIBS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LBLIBS)
 
 readLidarData: readLidarData.o
 	@echo ----------------------------------------------
