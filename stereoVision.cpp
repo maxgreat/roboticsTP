@@ -22,11 +22,12 @@ int main(int argc, char **argv)
   imshow("right image", imgR);
 
 
-  //Question 2.1 - Computation of disparity data
+  //Question 2.1 - Computation of disparity data -----------------------------------
   //Compute stereo correspondence -> disparity mat
   StereoSGBM stereo(0, 32, 7, 8*7*7, 32*7*7, 2, 0, 5, 100, 32, true);
   Mat disparity;
   stereo(imgL, imgR, disparity);
+  Mat disparity2 = disparity.clone();
 
   //Convert disparity image to a 8bits image
   Mat disparity_d;
@@ -34,6 +35,7 @@ int main(int argc, char **argv)
 
   // Display images and wait for a key press
   imshow("disparity", disparity_d);
+
 
   //Question 2.2 Road/obstacles segmentation in Cartesian Space --------------------
   //Remove pixel from the ground
@@ -59,15 +61,15 @@ int main(int argc, char **argv)
   }
   disparity.convertTo(disparity_d, CV_8U);
   imshow("disparity corrected", disparity_d);
-  
+  waitKey();
+ 
   
   //Question 2.3 - Road/obstacles segmentation in Disparity Space -------------
   //Compute the v-disparity
-  Mat v_disparity(disparity.rows, 32, CV_8UC1, Scalar::all(0));
-  cout << "L'image a " << v_disparity.rows << " rows et " << v_disparity.cols << "cols" << endl;
-  for(int v=0; v<disparity.rows ; v++) {
-    for(int u=0; u<disparity.cols ; u++) {
-       int d = disparity.at<unsigned char>(v,u);
+  Mat v_disparity(disparity2.rows, 32, CV_8UC1, Scalar::all(0));
+  for(int v=0; v<disparity2.rows ; v++) {
+    for(int u=0; u<disparity2.cols ; u++) {
+       int d = disparity2.at<unsigned char>(v,u);
        if(d/16.0 > 0){
          v_disparity.at<unsigned char>(v,d/16.0) += 1;
        }
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
   //Apply threshold to v-disparity
   Mat v_disp_thres;
   threshold(v_disparity, v_disp_thres, 60., 255, THRESH_TOZERO);
-  imshow("v_disp_thres", v_disp_thres);
+  //imshow("v_disp_thres", v_disp_thres);
   //Add points into vector
   std::vector<cv::Point2f> vec;
   for(int i=0; i<v_disp_thres.rows ; i++) {
@@ -96,18 +98,22 @@ int main(int argc, char **argv)
   cv::Vec4f line;
   fitLineRansac(vec,line);
   
-  cout << "line " << line << endl;
-  
-  Mat disparity_d2;
-  disparity.convertTo(disparity_d2, CV_8U);
   
   //Compute the line equation
   
   //For each x coordinate, compute the y coordinate with the equation
   //and remove the point the actual y is below the computed y
-  
-  
-
+  for(int i=0; i<disparity2.rows ; i++) {
+    for(int j=0; j<disparity2.cols ; j++) {
+       int d = disparity2.at<unsigned char>(i,j);
+       double y = ((i-line[2])*line[1] + line[0]*line[3]) / line[0]; 
+       if(y > d/16.0 + 0.2){
+         disparity2.at<unsigned char>(i,j) = 0;
+       }
+    }  
+  }
+  disparity2.convertTo(disparity_d, CV_8U);
+  imshow("Remove by v_disparity",disparity_d);
   
   
   
@@ -135,6 +141,8 @@ int main(int argc, char **argv)
   dispSegmented.convertTo(disparity_d, CV_8U);
   imshow("disparity Segmented", disparity_d);
   
+  //Matrix for cluster representation
+  //(vmin, vmax, umin, umax, nb_elem)
   Mat cluster = Mat(nb_seg, 5, CV_32S,Scalar::all(-1));
   for(int i=0; i < dispSegmented.rows; i++){ 
     for(int j=0 ; j < dispSegmented.cols ; j++){

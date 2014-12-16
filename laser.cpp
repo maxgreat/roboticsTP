@@ -123,28 +123,11 @@ int main()
 		
     }
     
-    //Draw the ROI
-    float y = ROI_ymin;
-    for(float x = ROI_xmin; x<ROI_xmax; x+= 0.2){
-        grid.at<float>((y_max-(y-y_min))/y_step, (x-x_min)/x_step) = 1.0;
-    
-        Vec3b c = Vec3b(128,128,0);
-        double z=camera_height -(lidar_height + sqrt(x*x+y*y)*sin(lidar_pitch_angle));
-    	int u=(int)uo+alpha_u*(x/(y+camera_ty));
-    	int v=(int)vo+alpha_v*(z/(y+camera_ty));
-        left_display_img.at<Vec3b>(v,u) = c;  
-    }
-    y = ROI_ymax;
-    for(float x = ROI_xmin; x<ROI_xmax; x+= 0.2){
-        grid.at<float>((y_max-(y-y_min))/y_step, (x-x_min)/x_step) = 1.0;
-        
-        Vec3b c = Vec3b(128,128,0);
-        double z=camera_height -(lidar_height + sqrt(x*x+y*y)*sin(lidar_pitch_angle));
-    	int u=(int)uo+alpha_u*(x/(y+camera_ty));
-    	int v=(int)vo+alpha_v*(z/(y+camera_ty));
-        left_display_img.at<Vec3b>(v,u) = c;   
-    }
-    
+    //Draw 4 points to represent the ROI
+    grid.at<float>((y_max-(ROI_ymin-y_min))/y_step, (ROI_xmin-x_min)/x_step) = 1.0;
+    grid.at<float>((y_max-(ROI_ymax-y_min))/y_step, (ROI_xmin-x_min)/x_step) = 1.0;
+    grid.at<float>((y_max-(ROI_ymin-y_min))/y_step, (ROI_xmax-x_min)/x_step) = 1.0;
+    grid.at<float>((y_max-(ROI_ymax-y_min))/y_step, (ROI_xmax-x_min)/x_step) = 1.0;
     
     
     float x_mean = 0.0;
@@ -169,7 +152,7 @@ int main()
             state(1) = y_mean;
             
             Mat estimated = K.correct(state);
-            cout << "estimated : " << estimated.at<float>(0) << ", " << estimated.at<float>(1) << " - " << estimated.at<float>(2) << ", " << estimated.at<float>(3) << endl;
+            //cout << estimated.at<float>(0) << " " << estimated.at<float>(1)<< endl;
 
             //compute position in camera frame of the estimated mean
             float ex = estimated.at<float>(0);
@@ -193,7 +176,7 @@ int main()
             LEst.push_back(estimated);
         }
         LPred.push_back(prediction);
-        cout << "predict : " << prediction.at<float>(0) << ", " << prediction.at<float>(1) << " - " << prediction.at<float>(2) << ", " << prediction.at<float>(3) << endl;
+        cout << prediction.at<float>(0) << " " << prediction.at<float>(1) << endl;
         
         //compute mean position in camera frame
     	double z=camera_height -(lidar_height + sqrt(x_mean*x_mean+y_mean*y_mean)*sin(lidar_pitch_angle));
@@ -209,7 +192,8 @@ int main()
     	  left_display_img.at<Vec3b>(v,u+1) = c;
     	  left_display_img.at<Vec3b>(v+1,u+1) = c;
     	}
-    	cout<< "Computed mean: " << x_mean << " , " << y_mean << endl;
+    	//cout<< "Computed mean: " << x_mean << " , " << y_mean << endl;
+        //cout << x_mean << " " << y_mean << endl;
         grid.at<float>((y_max-(y_mean-y_min))/y_step, (x_mean-x_min)/x_step) = 1.0;
         
         

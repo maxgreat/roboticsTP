@@ -1,4 +1,6 @@
 example and readLidarData : given with the subject - no modification 
+tp_util.cpp : modifications: comment line 27 to be able to compil with -Wall -Werror flags (unused variable) 
+
 stereoVision : part 1 - stereo vision
 laser : part 2 - extraction from lidar data
 
