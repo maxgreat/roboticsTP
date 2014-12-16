@@ -1,4 +1,4 @@
-DEBUG=yes
+DEBUG=no
 FAC=no
 CC=g++
 ifeq ($(DEBUG),yes)

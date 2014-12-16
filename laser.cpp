@@ -11,7 +11,7 @@ using namespace cv;
 using namespace std;
 
 
-int main( int argc, char** argv )
+int main()
 {
   //  Read lidar data from a file
   Mat lidar_data;

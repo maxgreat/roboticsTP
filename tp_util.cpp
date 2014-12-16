@@ -24,7 +24,7 @@ void fitLineRansac(const std::vector<Point2f> points,
 	for(int k=0; k<iterations; k++)
 	{
 		int i1=0, i2=0;
-		double dx = 0;
+		//double dx = 0;
 		while(i1==i2)
 		{
 			i1 = rng(n);

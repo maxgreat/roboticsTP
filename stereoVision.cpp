@@ -8,41 +8,6 @@ using namespace cv;
 using namespace std;
 
 
-class shortPoint{
-public:
-	shortPoint(){}
-	shortPoint(short i, short j){ 
-		x = i; 
-		y = j;
-	}
-	short x;
-	short y;
-};
-
-class shortRect{
-public:
-	shortRect(){}
-	shortRect(short i, short j, short k, short l){ 
-		x1 = i; 
-		y1 = j;
-		x2 = k;
-		y2 = l;
-	}
-	shortRect(shortPoint i, shortPoint j){ 
-		x1 = i.x; 
-		y1 = i.y;
-		x2 = j.x;
-		y2 = j.y;
-	}
-	short x1;
-	short y1;
-	short x2;
-	short y2;
-};
-
-
-
-
 int main(int argc, char **argv)
 {
   if(argc != 3) {
@@ -69,8 +34,6 @@ int main(int argc, char **argv)
 
   // Display images and wait for a key press
   imshow("disparity", disparity_d);
-  
-  waitKey();
 
   //Question 2.2 Road/obstacles segmentation in Cartesian Space --------------------
   //Remove pixel from the ground
@@ -83,8 +46,8 @@ int main(int argc, char **argv)
   //our parameters
   float ground = 0.2; //threshold for the ground
   float max_height = 2.5; //maximum height, points above this limit are removed
-  for(short i=0; i<disparity.rows ; i++) {
-    for(short j=0; j<disparity.cols ; j++) {
+  for(int i=0; i<disparity.rows ; i++) {
+    for(int j=0; j<disparity.cols ; j++) {
       //Height of this pixel
       z = Zo - ( ((i-vo)*b) / (disparity.at<short>(i,j)/16.0) );
       
@@ -96,9 +59,6 @@ int main(int argc, char **argv)
   }
   disparity.convertTo(disparity_d, CV_8U);
   imshow("disparity corrected", disparity_d);
-  waitKey();
-  
-  
   
   
   //Question 2.3 - Road/obstacles segmentation in Disparity Space -------------
@@ -114,12 +74,10 @@ int main(int argc, char **argv)
     }  
   }
 
-  imshow("v disparity", v_disparity);
-  waitKey();
-  //extraction of the road surface
+  //imshow("v disparity", v_disparity);
+  //waitKey();
   
-  
-  //Question 2.3.3 Ransac Algorithm
+  //Ransac Algorithm
   //Apply threshold to v-disparity
   Mat v_disp_thres;
   threshold(v_disparity, v_disp_thres, 60., 255, THRESH_TOZERO);
@@ -136,7 +94,7 @@ int main(int argc, char **argv)
   }
   //FitLineRansac
   cv::Vec4f line;
-  fitLineRansac(vec,line,1000,1.,7.);
+  fitLineRansac(vec,line);
   
   cout << "line " << line << endl;
   
@@ -166,85 +124,54 @@ int main(int argc, char **argv)
   cv::dilate(disparityFiltered, disparityFiltered, element);
   
   disparityFiltered.convertTo(disparity_d, CV_8U);
-  imshow("disparity transformed", disparity_d);
-  waitKey();
+  imshow("disparity filtered", disparity_d);
   
   
   //use segmentDisparity for clustering
-  Mat dispSegmented(disparityFiltered.size(), CV_16UC1);
+  Mat dispSegmented = Mat::zeros(disparityFiltered.size(), CV_32S);
   int nb_seg = segmentDisparity(disparityFiltered, dispSegmented);
-  //imshow("dispSegmented", dispSegmented);
-  //waitKey();
   
+  //Show disparity segmented
   dispSegmented.convertTo(disparity_d, CV_8U);
-  imshow("dispSegmented", disparity_d);
-  waitKey();
+  imshow("disparity Segmented", disparity_d);
   
-  //store every points in a vector
-  vector<vector<shortPoint> > segments;
-  for(short i = 0; i < nb_seg; i++){
-  	vector<shortPoint> r;
-  	segments.push_back(r);
-  }
-  
-  for(short i=0; i < dispSegmented.rows;i++){ 
-    for(short j=0 ; j < dispSegmented.cols ; j++){
-        segments[dispSegmented.at<short>(i,j)].push_back(shortPoint(i,j));
-    }
-  } 
-  
-  
-  //remove segments with size < 60 and the background
-  vector<vector<shortPoint> > seg;
-  for(short i = 1 ; i< nb_seg;i++){
-    if(segments[i].size() > 50){
-        seg.push_back(segments[i]);
-    }
-  }
-  cout << "It give us :" << seg.size() << " segments " << endl;
-  nb_seg = seg.size();
-  
-  //Compute the disparity means of a segment and the bounding box
-  vector<double> means(nb_seg);
-  vector<shortRect> boundBoxes(nb_seg); //(vmin, umin, vmax, umax)
-  for(short i = 0; i < nb_seg; i++){
-     means[i] = 0.0;
-     boundBoxes[i] = shortRect(seg[i][0].x, seg[i][0].y, seg[i][0].x,seg[i][0].y);
-     for(short k = 0; k < (short)seg[i].size(); k++){
-        means[i] += disparityFiltered.at<short>(seg[i][k].x, seg[i][k].y); 
+  Mat cluster = Mat(nb_seg, 5, CV_32S,Scalar::all(-1));
+  for(int i=0; i < dispSegmented.rows; i++){ 
+    for(int j=0 ; j < dispSegmented.cols ; j++){
+        int seg = dispSegmented.at<int>(i,j);
+        if(seg != 0){
         
-        boundBoxes[i].x1 = std::min(boundBoxes[i].x1, seg[i][k].x);
-        boundBoxes[i].x2 = std::max(boundBoxes[i].x2, seg[i][k].x);
-        boundBoxes[i].y1 = std::min(boundBoxes[i].y1, seg[i][k].y);
-        boundBoxes[i].y2 = std::max(boundBoxes[i].y2, seg[i][k].y);
-     }
-     means[i] /= seg[i].size();
+            cluster.at<int>(seg, 4) += 1;
+            if(cluster.at<int>(seg, 0) == -1){
+                cluster.at<int>(seg,0) = i;
+            } else if(cluster.at<int>(seg,0) > i){
+                cluster.at<int>(seg,0) = i;
+            }
+            if(cluster.at<int>(seg,1) < i){
+                cluster.at<int>(seg,1) = i;
+            }
+            if(cluster.at<int>(seg,2) == -1){
+                cluster.at<int>(seg,2) = j;
+            } else if(cluster.at<int>(seg,2) > j){
+                cluster.at<int>(seg,2) = j;
+            }
+            if(cluster.at<int>(seg,3) < j){
+                cluster.at<int>(seg,3) = j;
+            }
+        }
+    }
   }
-  //Show every bounding box (one by one)
-  for(short i = 0; i < nb_seg ; i++){
-    
-     for(short v = boundBoxes[i].x1; v < boundBoxes[i].x2; v++){
-		 disparityFiltered.at<short>(v,boundBoxes[i].y1) = 1023;
-		 disparityFiltered.at<short>(v,boundBoxes[i].y2) = 1023;
+  
+  for(int i = 0; i < nb_seg ; i++){
+     if(cluster.at<int>(i,4) > 50){
+         rectangle(disparityFiltered,Rect(cluster.at<int>(i,2),cluster.at<int>(i,0) , cluster.at<int>(i,3) - cluster.at<int>(i,2) , cluster.at<int>(i,1) - cluster.at<int>(i,0)),Scalar(255,0,0),1);
      }
-     for(short u = boundBoxes[i].y1; u < boundBoxes[i].y2; u++){
-		 disparityFiltered.at<short>(boundBoxes[i].x1,u) = 1023;
-		 disparityFiltered.at<short>(boundBoxes[i].x2,u) = 1023;
-     }
-     
-     Vec2i center = Point((boundBoxes[i].x1 + boundBoxes[i].x2)/2,(boundBoxes[i].y1 + boundBoxes[i].y2) /2);
-     disparityFiltered.at<short>(center[0],center[1]) = 255;
-     
-     
-     
   }
+  
   disparityFiltered.convertTo(disparity_d, CV_8U);
-  imshow("disparity segmented", disparity_d);
+  imshow("Bounding Boxes", disparity_d);
   waitKey();
-  //imshow("disparity segmented", disparityFiltered);
-  //waitKey();
-
-
+  
   return 0;
 }
 
